@@ -1,0 +1,6 @@
+merchant,category,amt,gender,city,state,city_pop,job,unix_time,hour,day,month,weekday,weekend,age,distance
+fraud_Rippin,shopping_net,1250.50,F,Houston,TX,2900000,Engineer,1325376018,23,1,1,6,1,42,15.2
+fraud_Brown,food_dining,45.75,M,New York,NY,8400000,Teacher,1325377018,18,1,1,6,1,35,2.8
+fraud_Smith,grocery_pos,220.10,F,Chicago,IL,2700000,Nurse,1325378018,10,1,1,6,1,28,5.1
+fraud_Johnson,gas_transport,80.00,M,Dallas,TX,1300000,Driver,1325379018,14,1,1,6,1,50,1.4
+fraud_Williams,misc_net,3400.00,F,Los Angeles,CA,3900000,Doctor,1325380018,2,1,1,6,1,31,45.6
