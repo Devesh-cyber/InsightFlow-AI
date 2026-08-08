@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Session, create_engine
 
 from app.config.settings import settings
-
+from app.models.alert import Alert
 
 engine = create_engine(
     settings.database_url,

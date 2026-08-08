@@ -8,7 +8,7 @@ from app.engines.comparison_engine import ComparisonEngine
 from app.engines.threshold_engine import ThresholdEngine
 from app.schemas.threshold_schema import ThresholdRule
 from app.services.threshold_service import ThresholdService
-
+from app.services.alert_service import AlertService
 
 class MonitoringService:
 
@@ -19,6 +19,8 @@ class MonitoringService:
         self.threshold_engine = ThresholdEngine()
 
         self.threshold_service = ThresholdService()
+
+        self.alert_service = AlertService()
 
     def monitor_dataset(
         self,
@@ -112,6 +114,18 @@ class MonitoringService:
             )
         )
 
+        created_alerts = []
+
+        if threshold_result.triggered:
+
+            created_alerts = (
+                self.alert_service.create_alerts(
+                    session=session,
+                    dataset_id=dataset_id,
+                    snapshot_id=latest_snapshot.id,
+                    alerts=threshold_result.alerts,
+                )
+            )
         # --------------------------------
         # 8. Return both results
         # --------------------------------
@@ -119,6 +133,7 @@ class MonitoringService:
         return {
             "comparison": report,
             "threshold": threshold_result,
+            'alerts': created_alerts
         }
 
     def _load_snapshot(
