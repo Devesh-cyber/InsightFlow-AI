@@ -1,7 +1,7 @@
 from pathlib import Path
 import shutil
 from fastapi import HTTPException, UploadFile
-from sqlmodel import Session
+from sqlmodel import Session, select
 from app.models.dataset import Dataset
 from app.services.snapshot_service import SnapshotService
 
@@ -30,17 +30,32 @@ class DatasetService:
                 buffer,
             )
 
-        dataset = Dataset(
-            name=name,
-            filename=file.filename,
-            file_path = str(file_path),
-            extension=extension
-        )
-
-        session.add(dataset)
-        session.commit()
-        session.refresh(dataset)
+        dataset = session.exec(
+            select(Dataset)
+            .where(
+                Dataset.name == name
+            )
+        ).first()
         
+        if dataset is None:
+            dataset = Dataset(
+                name=name,
+                filename=file.filename,
+                file_path = str(file_path),
+                extension=extension
+            )
+
+            session.add(dataset)
+            session.commit()
+            session.refresh(dataset)
+        else:
+            dataset.filename = file.filename
+            dataset.file_path = str(file_path)
+            dataset.extension = extension
+            session.add(dataset)
+            session.commit()
+            session.refresh(dataset)
+
         SnapshotService().create_snapshot(
             session=session,
             dataset_id=dataset.id,

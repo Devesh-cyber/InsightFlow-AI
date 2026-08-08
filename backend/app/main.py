@@ -4,6 +4,8 @@ from fastapi import FastAPI
 
 from app.api.health_router import router as health_router
 from app.api.dataset_router import router as dataset_router
+from app.api.monitoring_router import router as monitoring_router
+from app.api.threshold_router import router as threshold_router
 from app.config.database import create_db_and_tables
 from app.config.settings import settings
 
@@ -23,6 +25,9 @@ app = FastAPI(
 
 app.include_router(health_router)
 app.include_router(dataset_router)
+app.include_router(monitoring_router)
+app.include_router(threshold_router)
+
 
 @app.get("/")
 def root():
