@@ -11,12 +11,18 @@ from app.config.settings import settings
 from app.api.alert_router import (
     router as alert_router,
 )
+from app.scheduler.scheduler import (
+    start_scheduler,
+    stop_scheduler,
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
+    start_scheduler()
     print('Database Created ...')
     yield
+    stop_scheduler()
 
 
 app = FastAPI(

@@ -6,7 +6,9 @@ class Snapshot(SQLModel, table=True):
 
     __tablename__ = 'snapshots'
     id: Optional[int] = Field(None, primary_key=True)
-    dataset_id: int = Field(foreign_key='datasets.id')
+    dataset_id: int = Field(
+    foreign_key="dataset.id"
+)
     version: int
     parquet_path: str
     dataset_hash: str
