@@ -8,7 +8,7 @@ class ThresholdService:
     def get_threshold(
             self,
             session: Session,
-            dataset_id: str
+            dataset_id: int
     ) -> DatasetThreshold:
 
         threshold = session.exec(
