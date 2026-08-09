@@ -20,3 +20,5 @@ class DataSource(SQLModel, table=True):
     connection_string: str
 
     table_name: str | None = None
+
+    query: str | None = None

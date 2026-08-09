@@ -20,19 +20,11 @@ class DatabaseExtractionEngine:
                 f"{data_source.source_type}"
             )
 
-        if not data_source.table_name:
+        if not data_source.table_name and not data_source.query:
 
             raise ValueError(
-                "table_name is required"
-            )
-
-        if not re.match(
-            r"^[A-Za-z_][A-Za-z0-9_]*$",
-            data_source.table_name,
-        ):
-
-            raise ValueError(
-                "Invalid table name"
+                "Either table_name or query "
+                "must be configured"
             )
 
         engine = create_engine(
@@ -41,9 +33,26 @@ class DatabaseExtractionEngine:
 
         try:
 
-            query = text(
-                f'SELECT * FROM "{data_source.table_name}"'
-            )
+            if data_source.query:
+
+                query = text(
+                    data_source.query
+                )
+
+            else:
+
+                if not re.match(
+                    r"^[A-Za-z_][A-Za-z0-9_]*$",
+                    data_source.table_name,
+                ):
+
+                    raise ValueError(
+                        "Invalid table name"
+                    )
+
+                query = text(
+                    f'SELECT * FROM "{data_source.table_name}"'
+                )
 
             with engine.connect() as connection:
 

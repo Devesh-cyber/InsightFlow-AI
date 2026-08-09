@@ -7,7 +7,9 @@ class DataSourceCreate(BaseModel):
 
     connection_string: str
 
-    table_name: str
+    table_name: str | None = None
+
+    query: str | None = None
 
 
 class DataSourceResponse(BaseModel):
@@ -18,4 +20,6 @@ class DataSourceResponse(BaseModel):
 
     source_type: str
 
-    table_name: str
+    table_name: str | None = None
+
+    query: str | None = None

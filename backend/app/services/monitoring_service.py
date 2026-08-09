@@ -53,13 +53,11 @@ class MonitoringService:
 
         if len(snapshots) < 2:
 
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "At least two snapshots "
-                    "are required for comparison"
-                ),
-            )
+            return {
+                "comparison": None,
+                "threshold": None,
+                "alerts": [],
+            }
 
         latest_snapshot = snapshots[0]
 

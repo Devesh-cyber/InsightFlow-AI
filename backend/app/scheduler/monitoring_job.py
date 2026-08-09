@@ -82,11 +82,18 @@ def run_monitoring():
                 session.add(dataset)
                 session.commit()
 
-                if result["threshold"].triggered:
+                if result["threshold"] and result["threshold"].triggered:
 
                     print(
                         f"ALERT detected for "
                         f"dataset {dataset.id}"
+                    )
+
+                elif result["threshold"] is None:
+
+                    print(
+                        f"Dataset {dataset.id}: "
+                        "Baseline snapshot created"
                     )
 
                 else:
@@ -95,7 +102,6 @@ def run_monitoring():
                         f"No significant change "
                         f"for dataset {dataset.id}"
                     )
-
             except Exception as exc:
 
                 session.rollback()
