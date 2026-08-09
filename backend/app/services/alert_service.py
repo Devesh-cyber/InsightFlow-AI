@@ -1,16 +1,19 @@
+from fastapi import HTTPException
 from sqlmodel import Session, select
+
 from app.models.alert import Alert
 from app.schemas.threshold_schema import ThresholdAlert
+
 
 class AlertService:
 
     def create_alerts(
-    self,
-    session: Session,
-    dataset_id: int,
-    snapshot_id: int,
-    alerts: list[ThresholdAlert],
-) -> list[Alert]:
+        self,
+        session: Session,
+        dataset_id: int,
+        snapshot_id: int,
+        alerts: list[ThresholdAlert],
+    ) -> list[Alert]:
 
         created_alerts = []
 
@@ -51,10 +54,10 @@ class AlertService:
         return created_alerts
 
 
-    def get_alerts(
-            self,
-            session: Session,
-            dataset_id: int
+    def get_dataset_alerts(
+        self,
+        session: Session,
+        dataset_id: int
     ) -> list[Alert]:
 
         return session.exec(
@@ -67,14 +70,65 @@ class AlertService:
             )
         ).all()
 
+
+    def get_active_alerts(
+        self,
+        session: Session,
+        dataset_id: int
+    ) -> list[Alert]:
+
+        statement = (
+            select(Alert)
+            .where(
+                Alert.dataset_id == dataset_id
+            )
+            .where(
+                Alert.status == "active"
+            )
+            .order_by(
+                Alert.created_at.desc()
+            )
+        )
+
+        return session.exec(
+            statement
+        ).all()
+
+
+    def resolve_alert(
+        self,
+        session: Session,
+        alert_id: int
+    ) -> Alert:
+
+        alert = session.get(
+            Alert,
+            alert_id
+        )
+
+        if not alert:
+            raise HTTPException(
+                status_code=404,
+                detail="Alert not found"
+            )
+
+        alert.status = "resolved"
+
+        session.add(alert)
+        session.commit()
+        session.refresh(alert)
+
+        return alert
+
+
     def alert_exists(
-    self,
-    session: Session,
-    dataset_id: int,
-    snapshot_id: int,
-    column: str | None,
-    metric: str,
-) -> bool:
+        self,
+        session: Session,
+        dataset_id: int,
+        snapshot_id: int,
+        column: str | None,
+        metric: str,
+    ) -> bool:
 
         alert = session.exec(
             select(Alert)

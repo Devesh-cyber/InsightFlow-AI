@@ -1,26 +1,26 @@
+from typing import Optional
 from datetime import datetime
-
 from sqlmodel import SQLModel, Field
 
 
 class Alert(SQLModel, table=True):
 
-    id: int | None = Field(
+    id: Optional[int] = Field(
         default=None,
-        primary_key=True,
+        primary_key=True
     )
 
     dataset_id: int = Field(
-        index=True,
+        foreign_key="dataset.id"
     )
 
     snapshot_id: int = Field(
-        index=True,
+        foreign_key="snapshots.id"
     )
 
-    metric: str
+    column: str
 
-    column: str | None = None
+    metric: str
 
     old_value: float
 
@@ -32,6 +32,10 @@ class Alert(SQLModel, table=True):
 
     direction: str
 
+    status: str = Field(
+        default="active"
+    )
+
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=datetime.utcnow
     )
