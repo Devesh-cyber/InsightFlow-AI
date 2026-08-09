@@ -3,35 +3,38 @@ from apscheduler.schedulers.background import (
 )
 
 from app.scheduler.monitoring_job import (
-    run_monitoring
+    run_monitoring,
 )
+
 
 scheduler = BackgroundScheduler()
 
 
 def start_scheduler():
-    """
-    Start the application scheduler.
-    """
 
     if not scheduler.running:
+
         scheduler.add_job(
             run_monitoring,
             "interval",
-            #hours=1,
-            seconds=5,
+            minutes=1,
             id="dataset_monitoring",
             replace_existing=True,
         )
+
         scheduler.start()
-        print('Scheduler Started')
+
+        print(
+            "Scheduler Started"
+        )
 
 
 def stop_scheduler():
-    """
-    Stop the application scheduler.
-    """
 
     if scheduler.running:
+
         scheduler.shutdown()
-        print('Scheduler Stopped')
+
+        print(
+            "Scheduler Stopped"
+        )

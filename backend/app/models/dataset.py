@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
 
 class Dataset(SQLModel, table=True):
@@ -11,8 +11,11 @@ class Dataset(SQLModel, table=True):
     )
 
     name: str
+
     filename: str
+
     file_path: str
+
     extension: str
 
     monitoring_enabled: bool = Field(

@@ -1,28 +1,26 @@
 import pandas as pd
 
 from fastapi import HTTPException
+from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.models.snapshot import Snapshot
 from app.engines.comparison_engine import ComparisonEngine
 from app.engines.threshold_engine import ThresholdEngine
-from app.schemas.threshold_schema import ThresholdRule
-from app.services.threshold_service import ThresholdService
-from app.services.alert_service import AlertService
 
-from sqlalchemy import func
+from app.models.alert import Alert
 from app.models.dataset import Dataset
 from app.models.snapshot import Snapshot
-from app.models.alert import Alert
-from app.schemas.monitoring_schema import (
-    MonitoringSummary,
-    LatestSnapshotSummary,
-)
-from app.models.alert import Alert
-from app.schemas.monitoring_schema import TimelineEvent
 
-from app.models.data_source import DataSource
-from app.services.snapshot_service import SnapshotService
+from app.schemas.monitoring_schema import (
+    LatestSnapshotSummary,
+    MonitoringSummary,
+    TimelineEvent,
+)
+from app.schemas.threshold_schema import ThresholdRule
+
+from app.services.alert_service import AlertService
+from app.services.threshold_service import ThresholdService
+
 
 class MonitoringService:
 
@@ -36,15 +34,12 @@ class MonitoringService:
 
         self.alert_service = AlertService()
 
+
     def monitor_dataset(
         self,
         session: Session,
         dataset_id: int,
     ):
-
-        # --------------------------------
-        # 1. Get snapshots for dataset
-        # --------------------------------
 
         snapshots = session.exec(
             select(Snapshot)
@@ -56,10 +51,6 @@ class MonitoringService:
             )
         ).all()
 
-        # --------------------------------
-        # 2. Need at least 2 snapshots
-        # --------------------------------
-
         if len(snapshots) < 2:
 
             raise HTTPException(
@@ -70,17 +61,9 @@ class MonitoringService:
                 ),
             )
 
-        # --------------------------------
-        # 3. Select latest two snapshots
-        # --------------------------------
-
         latest_snapshot = snapshots[0]
 
         previous_snapshot = snapshots[1]
-
-        # --------------------------------
-        # 4. Load Parquet files
-        # --------------------------------
 
         old_df = self._load_snapshot(
             previous_snapshot
@@ -90,10 +73,6 @@ class MonitoringService:
             latest_snapshot
         )
 
-        # --------------------------------
-        # 5. Compare snapshots
-        # --------------------------------
-
         report = self.comparison_engine.compare(
             old_snapshot_id=previous_snapshot.id,
             new_snapshot_id=latest_snapshot.id,
@@ -101,20 +80,12 @@ class MonitoringService:
             new_df=new_df,
         )
 
-        # --------------------------------
-        # 6. Get dataset threshold
-        # --------------------------------
-
         threshold_config = (
             self.threshold_service.get_threshold(
                 session=session,
                 dataset_id=dataset_id,
             )
         )
-
-        # --------------------------------
-        # 7. Evaluate threshold
-        # --------------------------------
 
         threshold_result = (
             self.threshold_engine.evaluate(
@@ -140,15 +111,13 @@ class MonitoringService:
                     alerts=threshold_result.alerts,
                 )
             )
-        # --------------------------------
-        # 8. Return both results
-        # --------------------------------
 
         return {
             "comparison": report,
             "threshold": threshold_result,
-            'alerts': created_alerts
+            "alerts": created_alerts,
         }
+
 
     def _load_snapshot(
         self,
@@ -159,11 +128,12 @@ class MonitoringService:
             snapshot.parquet_path
         )
 
+
     def get_monitoring_summary(
-    self,
-    session: Session,
-    dataset_id: int,
-) -> MonitoringSummary:
+        self,
+        session: Session,
+        dataset_id: int,
+    ) -> MonitoringSummary:
 
         dataset = session.get(
             Dataset,
@@ -171,6 +141,7 @@ class MonitoringService:
         )
 
         if not dataset:
+
             raise HTTPException(
                 status_code=404,
                 detail="Dataset not found"
@@ -215,6 +186,7 @@ class MonitoringService:
         latest_snapshot_data = None
 
         if latest_snapshot:
+
             latest_snapshot_data = (
                 LatestSnapshotSummary(
                     id=latest_snapshot.id,
@@ -228,6 +200,7 @@ class MonitoringService:
             monitoring_enabled=dataset.monitoring_enabled,
 
             total_snapshots=total_snapshots,
+
             last_processed_snapshot_id=(
                 dataset.last_processed_snapshot_id
             ),
@@ -238,11 +211,12 @@ class MonitoringService:
             latest_snapshot=latest_snapshot_data,
         )
 
+
     def get_snapshot_history(
-    self,
-    session: Session,
-    dataset_id: int,
-) -> list[Snapshot]:
+        self,
+        session: Session,
+        dataset_id: int,
+    ) -> list[Snapshot]:
 
         dataset = session.get(
             Dataset,
@@ -250,6 +224,7 @@ class MonitoringService:
         )
 
         if not dataset:
+
             raise HTTPException(
                 status_code=404,
                 detail="Dataset not found"
@@ -265,11 +240,12 @@ class MonitoringService:
             )
         ).all()
 
+
     def get_monitoring_timeline(
-    self,
-    session: Session,
-    dataset_id: int,
-) -> list[TimelineEvent]:
+        self,
+        session: Session,
+        dataset_id: int,
+    ) -> list[TimelineEvent]:
 
         dataset = session.get(
             Dataset,
@@ -277,6 +253,7 @@ class MonitoringService:
         )
 
         if not dataset:
+
             raise HTTPException(
                 status_code=404,
                 detail="Dataset not found"
@@ -299,6 +276,7 @@ class MonitoringService:
         timeline = []
 
         for snapshot in snapshots:
+
             timeline.append(
                 TimelineEvent(
                     type="snapshot",
@@ -310,6 +288,7 @@ class MonitoringService:
             )
 
         for alert in alerts:
+
             timeline.append(
                 TimelineEvent(
                     type="alert",
@@ -317,7 +296,9 @@ class MonitoringService:
                     snapshot_id=alert.snapshot_id,
                     column=alert.column,
                     metric=alert.metric,
-                    percentage_change=alert.percentage_change,
+                    percentage_change=(
+                        alert.percentage_change
+                    ),
                     status=alert.status,
                     created_at=alert.created_at,
                 )

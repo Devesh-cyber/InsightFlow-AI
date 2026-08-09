@@ -23,12 +23,13 @@ class DataSourceService:
         ).first()
 
         if existing:
+
             raise HTTPException(
                 status_code=400,
                 detail=(
                     "Data source already exists "
                     "for this dataset"
-                )
+                ),
             )
 
         data_source = DataSource(
@@ -59,6 +60,7 @@ class DataSourceService:
         ).first()
 
         if not data_source:
+
             raise HTTPException(
                 status_code=404,
                 detail="Data source not found",

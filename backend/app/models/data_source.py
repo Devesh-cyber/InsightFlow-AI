@@ -4,6 +4,7 @@ from sqlmodel import Field, SQLModel
 
 
 class DataSource(SQLModel, table=True):
+
     id: Optional[int] = Field(
         default=None,
         primary_key=True,
@@ -15,5 +16,7 @@ class DataSource(SQLModel, table=True):
     )
 
     source_type: str
+
     connection_string: str
+
     table_name: str | None = None

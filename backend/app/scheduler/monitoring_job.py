@@ -3,7 +3,6 @@ from sqlmodel import Session, select
 from app.config.database import engine
 from app.models.dataset import Dataset
 from app.models.data_source import DataSource
-
 from app.services.monitoring_service import (
     MonitoringService,
 )
@@ -78,9 +77,7 @@ def run_monitoring():
                     )
                 )
 
-                dataset.last_processed_snapshot_id = (
-                    snapshot.id
-                )
+                dataset.last_processed_snapshot_id = snapshot.id
 
                 session.add(dataset)
                 session.commit()
