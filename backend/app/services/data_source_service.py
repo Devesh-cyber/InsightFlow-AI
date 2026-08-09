@@ -24,7 +24,6 @@ class DataSourceService:
         ).first()
 
         if existing:
-
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -34,7 +33,6 @@ class DataSourceService:
             )
 
         if not table_name and not query:
-
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -72,7 +70,6 @@ class DataSourceService:
         ).first()
 
         if not data_source:
-
             raise HTTPException(
                 status_code=404,
                 detail="Data source not found",
@@ -80,15 +77,16 @@ class DataSourceService:
 
         return data_source
 
+
     def update_data_source(
-    self,
-    session: Session,
-    dataset_id: int,
-    source_type: str,
-    connection_string: str,
-    table_name: str | None = None,
-    query: str | None = None,
-) -> DataSource:
+        self,
+        session: Session,
+        dataset_id: int,
+        source_type: str,
+        connection_string: str,
+        table_name: str | None = None,
+        query: str | None = None,
+    ) -> DataSource:
 
         data_source = self.get_data_source(
             session=session,
@@ -96,7 +94,6 @@ class DataSourceService:
         )
 
         if not table_name and not query:
-
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -117,16 +114,16 @@ class DataSourceService:
         return data_source
 
 
-def delete_data_source(
-    self,
-    session: Session,
-    dataset_id: int,
-) -> None:
+    def delete_data_source(
+        self,
+        session: Session,
+        dataset_id: int,
+    ) -> None:
 
-    data_source = self.get_data_source(
-        session=session,
-        dataset_id=dataset_id,
-    )
+        data_source = self.get_data_source(
+            session=session,
+            dataset_id=dataset_id,
+        )
 
-    session.delete(data_source)
-    session.commit()
+        session.delete(data_source)
+        session.commit()

@@ -16,7 +16,9 @@ from app.scheduler.scheduler import (
     start_scheduler,
     stop_scheduler,
 )
-
+from app.api.report_router import (
+    router as report_router,
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -45,7 +47,7 @@ app.include_router(monitoring_router)
 app.include_router(threshold_router)
 app.include_router(alert_router)
 app.include_router(data_source_router)
-
+app.include_router(report_router)
 
 @app.get("/")
 def root():
