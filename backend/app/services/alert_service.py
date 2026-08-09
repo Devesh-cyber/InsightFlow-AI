@@ -72,10 +72,10 @@ class AlertService:
 
 
     def get_active_alerts(
-        self,
-        session: Session,
-        dataset_id: int
-    ) -> list[Alert]:
+    self,
+    session: Session,
+    dataset_id: int
+) -> list[Alert]:
 
         statement = (
             select(Alert)
@@ -90,9 +90,7 @@ class AlertService:
             )
         )
 
-        return session.exec(
-            statement
-        ).all()
+        return session.exec(statement).all()
 
 
     def resolve_alert(
