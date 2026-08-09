@@ -2,14 +2,22 @@ from sqlmodel import Session, select
 
 from app.config.database import engine
 from app.models.dataset import Dataset
-from app.models.snapshot import Snapshot
-from app.services.monitoring_service import MonitoringService
+from app.models.data_source import DataSource
+
+from app.services.monitoring_service import (
+    MonitoringService,
+)
+from app.services.snapshot_service import (
+    SnapshotService,
+)
+
 
 def run_monitoring():
 
-    print('Indighflow monitoring job started')
+    print("InsightFlow monitoring job started")
 
     monitoring_service = MonitoringService()
+    snapshot_service = SnapshotService()
 
     with Session(engine) as session:
 
@@ -24,36 +32,43 @@ def run_monitoring():
 
             try:
 
-                latest_snapshot = session.exec(
-                    select(Snapshot)
+                data_source = session.exec(
+                    select(DataSource)
                     .where(
-                        Snapshot.dataset_id == dataset.id
-                    )
-                    .order_by(
-                        Snapshot.version.desc()
+                        DataSource.dataset_id == dataset.id
                     )
                 ).first()
 
-                if latest_snapshot is None:
-                    print(
-                        f"No snapshots for dataset "
-                        f"{dataset.id}"
-                    )
-                    continue
+                if not data_source:
 
-                if (
-                    dataset.last_processed_snapshot_id
-                    == latest_snapshot.id
-                ):
                     print(
                         f"Dataset {dataset.id}: "
-                        f"No new snapshot. Skipping."
+                        "No data source configured"
                     )
+
+                    continue
+
+                snapshot = (
+                    snapshot_service
+                    .create_snapshot_from_database(
+                        session=session,
+                        dataset_id=dataset.id,
+                        data_source=data_source,
+                    )
+                )
+
+                if not snapshot:
+
+                    print(
+                        f"Dataset {dataset.id}: "
+                        "No data change detected"
+                    )
+
                     continue
 
                 print(
-                    f"Monitoring dataset: "
-                    f"{dataset.id}"
+                    f"Dataset {dataset.id}: "
+                    f"New snapshot v{snapshot.version}"
                 )
 
                 result = (
@@ -64,7 +79,7 @@ def run_monitoring():
                 )
 
                 dataset.last_processed_snapshot_id = (
-                    latest_snapshot.id
+                    snapshot.id
                 )
 
                 session.add(dataset)
@@ -86,8 +101,13 @@ def run_monitoring():
 
             except Exception as exc:
 
+                session.rollback()
+
                 print(
                     f"Monitoring failed for "
                     f"dataset {dataset.id}: {exc}"
                 )
-    print("InsightFlow monitoring job finished")
+
+    print(
+        "InsightFlow monitoring job finished"
+    )

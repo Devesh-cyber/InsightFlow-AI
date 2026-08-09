@@ -55,19 +55,30 @@ class AlertService:
 
 
     def get_dataset_alerts(
-        self,
-        session: Session,
-        dataset_id: int
-    ) -> list[Alert]:
+    self,
+    session: Session,
+    dataset_id: int,
+    status: str | None = None,
+) -> list[Alert]:
 
-        return session.exec(
+        statement = (
             select(Alert)
             .where(
                 Alert.dataset_id == dataset_id
             )
-            .order_by(
-                Alert.created_at.desc()
+        )
+
+        if status:
+            statement = statement.where(
+                Alert.status == status
             )
+
+        statement = statement.order_by(
+            Alert.created_at.desc()
+        )
+
+        return session.exec(
+            statement
         ).all()
 
 

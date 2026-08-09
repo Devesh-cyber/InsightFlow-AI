@@ -10,6 +10,20 @@ from app.schemas.threshold_schema import ThresholdRule
 from app.services.threshold_service import ThresholdService
 from app.services.alert_service import AlertService
 
+from sqlalchemy import func
+from app.models.dataset import Dataset
+from app.models.snapshot import Snapshot
+from app.models.alert import Alert
+from app.schemas.monitoring_schema import (
+    MonitoringSummary,
+    LatestSnapshotSummary,
+)
+from app.models.alert import Alert
+from app.schemas.monitoring_schema import TimelineEvent
+
+from app.models.data_source import DataSource
+from app.services.snapshot_service import SnapshotService
+
 class MonitoringService:
 
     def __init__(self):
@@ -144,3 +158,174 @@ class MonitoringService:
         return pd.read_parquet(
             snapshot.parquet_path
         )
+
+    def get_monitoring_summary(
+    self,
+    session: Session,
+    dataset_id: int,
+) -> MonitoringSummary:
+
+        dataset = session.get(
+            Dataset,
+            dataset_id
+        )
+
+        if not dataset:
+            raise HTTPException(
+                status_code=404,
+                detail="Dataset not found"
+            )
+
+        total_snapshots = session.exec(
+            select(func.count())
+            .select_from(Snapshot)
+            .where(
+                Snapshot.dataset_id == dataset_id
+            )
+        ).one()
+
+        active_alerts = session.exec(
+            select(func.count())
+            .select_from(Alert)
+            .where(
+                Alert.dataset_id == dataset_id,
+                Alert.status == "active"
+            )
+        ).one()
+
+        resolved_alerts = session.exec(
+            select(func.count())
+            .select_from(Alert)
+            .where(
+                Alert.dataset_id == dataset_id,
+                Alert.status == "resolved"
+            )
+        ).one()
+
+        latest_snapshot = session.exec(
+            select(Snapshot)
+            .where(
+                Snapshot.dataset_id == dataset_id
+            )
+            .order_by(
+                Snapshot.version.desc()
+            )
+        ).first()
+
+        latest_snapshot_data = None
+
+        if latest_snapshot:
+            latest_snapshot_data = (
+                LatestSnapshotSummary(
+                    id=latest_snapshot.id,
+                    version=latest_snapshot.version,
+                    created_at=latest_snapshot.created_at,
+                )
+            )
+
+        return MonitoringSummary(
+            dataset_id=dataset.id,
+            monitoring_enabled=dataset.monitoring_enabled,
+
+            total_snapshots=total_snapshots,
+            last_processed_snapshot_id=(
+                dataset.last_processed_snapshot_id
+            ),
+
+            active_alerts=active_alerts,
+            resolved_alerts=resolved_alerts,
+
+            latest_snapshot=latest_snapshot_data,
+        )
+
+    def get_snapshot_history(
+    self,
+    session: Session,
+    dataset_id: int,
+) -> list[Snapshot]:
+
+        dataset = session.get(
+            Dataset,
+            dataset_id
+        )
+
+        if not dataset:
+            raise HTTPException(
+                status_code=404,
+                detail="Dataset not found"
+            )
+
+        return session.exec(
+            select(Snapshot)
+            .where(
+                Snapshot.dataset_id == dataset_id
+            )
+            .order_by(
+                Snapshot.version.desc()
+            )
+        ).all()
+
+    def get_monitoring_timeline(
+    self,
+    session: Session,
+    dataset_id: int,
+) -> list[TimelineEvent]:
+
+        dataset = session.get(
+            Dataset,
+            dataset_id
+        )
+
+        if not dataset:
+            raise HTTPException(
+                status_code=404,
+                detail="Dataset not found"
+            )
+
+        snapshots = session.exec(
+            select(Snapshot)
+            .where(
+                Snapshot.dataset_id == dataset_id
+            )
+        ).all()
+
+        alerts = session.exec(
+            select(Alert)
+            .where(
+                Alert.dataset_id == dataset_id
+            )
+        ).all()
+
+        timeline = []
+
+        for snapshot in snapshots:
+            timeline.append(
+                TimelineEvent(
+                    type="snapshot",
+                    id=snapshot.id,
+                    snapshot_id=snapshot.id,
+                    version=snapshot.version,
+                    created_at=snapshot.created_at,
+                )
+            )
+
+        for alert in alerts:
+            timeline.append(
+                TimelineEvent(
+                    type="alert",
+                    id=alert.id,
+                    snapshot_id=alert.snapshot_id,
+                    column=alert.column,
+                    metric=alert.metric,
+                    percentage_change=alert.percentage_change,
+                    status=alert.status,
+                    created_at=alert.created_at,
+                )
+            )
+
+        timeline.sort(
+            key=lambda event: event.created_at,
+            reverse=True,
+        )
+
+        return timeline

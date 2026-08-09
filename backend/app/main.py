@@ -16,7 +16,7 @@ from app.scheduler.scheduler import (
     start_scheduler,
     stop_scheduler,
 )
-
+from app.api.data_source_router import router as data_source_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
@@ -38,6 +38,7 @@ app.include_router(monitoring_router)
 app.include_router(threshold_router)
 app.include_router(alert_router)
 app.include_router(alert_router)
+app.include_router(data_source_router)
 
 @app.get("/")
 def root():

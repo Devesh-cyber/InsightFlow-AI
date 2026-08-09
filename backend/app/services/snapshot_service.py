@@ -3,6 +3,11 @@ import pandas as pd
 from sqlmodel import Session, select
 from app.models.snapshot import Snapshot
 from app.utils.hash_utils import generate_dataframe_hash
+from app.engines.database_extraction_engine import (
+    DatabaseExtractionEngine,
+)
+from app.models.data_source import DataSource
+
 
 class SnapshotService:
 
@@ -53,3 +58,21 @@ class SnapshotService:
         session.refresh(snapshot)
 
         return snapshot
+
+    def create_snapshot_from_database(
+    self,
+    session: Session,
+    dataset_id: int,
+    data_source: DataSource,
+):
+        extraction_engine = DatabaseExtractionEngine()
+
+        df = extraction_engine.extract(
+            data_source=data_source
+        )
+
+        return self.create_snapshot_from_dataframe(
+            session=session,
+            dataset_id=dataset_id,
+            df=df,
+        )
